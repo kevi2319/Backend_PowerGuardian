@@ -1,0 +1,6 @@
+@Backend_PowerGuardian_HostAddress = http://localhost:5145
+
+GET {{Backend_PowerGuardian_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
