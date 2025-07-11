@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\kgome\\OneDrive\\Documents\\Escuela\\ProyectoFinal\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj": {}
+    "D:\\Usuarios\\Bonny\\Escritorio\\PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj": {}
   },
   "projects": {
-    "C:\\Users\\kgome\\OneDrive\\Documents\\Escuela\\ProyectoFinal\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj": {
+    "D:\\Usuarios\\Bonny\\Escritorio\\PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\kgome\\OneDrive\\Documents\\Escuela\\ProyectoFinal\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj",
+        "projectUniqueName": "D:\\Usuarios\\Bonny\\Escritorio\\PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj",
         "projectName": "Backend_PowerGuardian",
-        "projectPath": "C:\\Users\\kgome\\OneDrive\\Documents\\Escuela\\ProyectoFinal\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj",
-        "packagesPath": "C:\\Users\\kgome\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\kgome\\OneDrive\\Documents\\Escuela\\ProyectoFinal\\Backend_PowerGuardian\\Backend_PowerGuardian\\obj\\",
+        "projectPath": "D:\\Usuarios\\Bonny\\Escritorio\\PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj",
+        "packagesPath": "C:\\Users\\bonny\\.nuget\\packages\\",
+        "outputPath": "D:\\Usuarios\\Bonny\\Escritorio\\PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\kgome\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\bonny\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -70,6 +70,12 @@
               "version": "[9.0.6, )"
             },
             "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[9.0.6, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
               "target": "Package",
               "version": "[9.0.6, )"
             },
