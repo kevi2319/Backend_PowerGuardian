@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Backend_PowerGuardian")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+48a06f20f95c6629670315bdb02f505e87bc99f8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+117da4851db329a2ad57e47c2b43c0ae92ab96a6")]
 [assembly: System.Reflection.AssemblyProductAttribute("Backend_PowerGuardian")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Backend_PowerGuardian")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

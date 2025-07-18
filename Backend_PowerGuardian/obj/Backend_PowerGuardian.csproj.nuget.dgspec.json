@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Usuarios\\Bonny\\Escritorio\\PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj": {}
+    "C:\\Users\\kgome\\OneDrive\\Documents\\GitHub\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj": {}
   },
   "projects": {
-    "D:\\Usuarios\\Bonny\\Escritorio\\PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj": {
+    "C:\\Users\\kgome\\OneDrive\\Documents\\GitHub\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Usuarios\\Bonny\\Escritorio\\PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj",
+        "projectUniqueName": "C:\\Users\\kgome\\OneDrive\\Documents\\GitHub\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj",
         "projectName": "Backend_PowerGuardian",
-        "projectPath": "D:\\Usuarios\\Bonny\\Escritorio\\PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj",
-        "packagesPath": "C:\\Users\\bonny\\.nuget\\packages\\",
-        "outputPath": "D:\\Usuarios\\Bonny\\Escritorio\\PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian\\obj\\",
+        "projectPath": "C:\\Users\\kgome\\OneDrive\\Documents\\GitHub\\Backend_PowerGuardian\\Backend_PowerGuardian\\Backend_PowerGuardian.csproj",
+        "packagesPath": "C:\\Users\\kgome\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\kgome\\OneDrive\\Documents\\GitHub\\Backend_PowerGuardian\\Backend_PowerGuardian\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\bonny\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\kgome\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -111,7 +111,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

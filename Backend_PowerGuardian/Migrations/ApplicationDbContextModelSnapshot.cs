@@ -47,8 +47,8 @@ namespace Backend_PowerGuardian.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("FechaNacimiento")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime?>("FechaNacimiento")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -57,6 +57,7 @@ namespace Backend_PowerGuardian.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Nombres")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NormalizedEmail")
@@ -68,6 +69,7 @@ namespace Backend_PowerGuardian.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("Pais")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PasswordHash")
@@ -80,9 +82,6 @@ namespace Backend_PowerGuardian.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Telefono")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("TwoFactorEnabled")

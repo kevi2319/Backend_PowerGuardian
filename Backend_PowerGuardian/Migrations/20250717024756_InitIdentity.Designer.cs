@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend_PowerGuardian.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250702230827_ExtendApplicationUser")]
-    partial class ExtendApplicationUser
+    [Migration("20250717024756_InitIdentity")]
+    partial class InitIdentity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,9 +34,11 @@ namespace Backend_PowerGuardian.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ApellidoMaterno")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ApellidoPaterno")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -50,8 +52,8 @@ namespace Backend_PowerGuardian.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("FechaNacimiento")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime?>("FechaNacimiento")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -60,6 +62,7 @@ namespace Backend_PowerGuardian.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Nombres")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NormalizedEmail")
@@ -71,6 +74,7 @@ namespace Backend_PowerGuardian.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("Pais")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PasswordHash")
@@ -83,9 +87,6 @@ namespace Backend_PowerGuardian.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Telefono")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("TwoFactorEnabled")

@@ -3,27 +3,32 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Backend_PowerGuardian.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
 
-        public UserController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
+        public UserController(
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            RoleManager<IdentityRole> roleManager,
+            IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _roleManager = roleManager;
             _configuration = configuration;
         }
 
@@ -31,8 +36,7 @@ namespace Backend_PowerGuardian.Controllers
         public async Task<IActionResult> ObtenerUsuarioPorId(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
+            if (user == null) return NotFound();
 
             return Ok(new
             {
@@ -44,7 +48,8 @@ namespace Backend_PowerGuardian.Controllers
                 user.ApellidoMaterno,
                 user.FechaNacimiento,
                 user.Pais,
-                user.PhoneNumber
+                user.PhoneNumber,
+                Roles = await _userManager.GetRolesAsync(user)
             });
         }
 
@@ -52,98 +57,88 @@ namespace Backend_PowerGuardian.Controllers
         public async Task<IActionResult> ActualizarUsuario(string id, [FromBody] RegisterModel model)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
+            if (user == null) return NotFound();
 
             user.UserName = model.Username;
             user.Email = model.Email;
             user.Nombres = model.Nombres;
             user.ApellidoPaterno = model.ApellidoPaterno;
-            user.ApellidoMaterno = model.ApellidoMaterno;
+            user.ApellidoMaterno = model.ApellidoMaterno ?? ""; // Evitar null
             user.FechaNacimiento = model.FechaNacimiento;
             user.Pais = model.Pais;
             user.PhoneNumber = model.Telefono;
 
             var result = await _userManager.UpdateAsync(user);
-
-            if (result.Succeeded)
-                return Ok("Usuario actualizado correctamente");
-
-            return BadRequest(result.Errors);
+            return result.Succeeded ? Ok("Usuario actualizado correctamente") : BadRequest(result.Errors);
         }
 
-
-        // Registro de usuario
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
             if (model.Password != model.ConfirmPassword)
                 return BadRequest("Las contraseñas no coinciden");
 
-            var existingEmail = await _userManager.FindByEmailAsync(model.Email);
-            if (existingEmail != null)
+            if (await _userManager.FindByEmailAsync(model.Email) != null)
                 return BadRequest("Ya existe un usuario con ese correo");
 
-            var existingPhone = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == model.Telefono);
-            if (existingPhone != null)
+            if (await _userManager.Users.AnyAsync(u => u.PhoneNumber == model.Telefono))
                 return BadRequest("Ya existe un usuario con ese teléfono");
 
             var user = new ApplicationUser
+
             {
                 UserName = model.Username,
                 Email = model.Email,
                 Nombres = model.Nombres,
                 ApellidoPaterno = model.ApellidoPaterno,
-                ApellidoMaterno = model.ApellidoMaterno,
+                ApellidoMaterno = model.ApellidoMaterno ?? "", // Evitar null
                 FechaNacimiento = model.FechaNacimiento,
                 Pais = model.Pais,
                 PhoneNumber = model.Telefono
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded) return BadRequest(result.Errors);
 
-            if (result.Succeeded)
-                return Ok("Usuario registrado correctamente");
+            if (!await _roleManager.RoleExistsAsync("Cliente"))
+                await _roleManager.CreateAsync(new IdentityRole("Cliente"));
 
-            return BadRequest(result.Errors);
+            await _userManager.AddToRoleAsync(user, "Cliente");
+            return Ok("Usuario registrado correctamente");
         }
 
-        // Login de usuario (con generación de JWT)
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
-            //Dentro del user buscaremos el Email 
-            var user = await _userManager.FindByEmailAsync(model.Username);
-
-            // Si no encontró por email, intenta con username
-            if (user == null)
-                user = await _userManager.FindByNameAsync(model.Username);
+            var user = await _userManager.FindByEmailAsync(model.Username) ??
+                       await _userManager.FindByNameAsync(model.Username);
 
             if (user == null)
                 return Unauthorized("Usuario o correo no encontrado");
 
-            //valida la contraseña
-            var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, false);
+            var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
+            if (!result.Succeeded)
+                return Unauthorized("Credenciales inválidas");
 
-            if (result.Succeeded)
-            {
-                var token = GenerateJwtToken(user);
-                return Ok(new { token, id = user.Id });
-            }
-
-            return Unauthorized("Invalid credentials");
+            var token = await GenerateJwtToken(user);
+            return Ok(new { token, id = user.Id });
         }
 
-        // Método para generar el JWT
-        private string GenerateJwtToken(ApplicationUser user)
+        private async Task<string> GenerateJwtToken(ApplicationUser user)
         {
-            var claims = new[]
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new(JwtRegisteredClaimNames.Sub, user.Id),
+                new(ClaimTypes.Name, user.UserName),
+                new(JwtRegisteredClaimNames.Email, user.Email),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+
+            claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -152,27 +147,25 @@ namespace Backend_PowerGuardian.Controllers
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
+                expires: DateTime.UtcNow.AddMinutes(30),
                 signingCredentials: creds
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-
-       
     }
 
-    // Modelos para el registro y login
+    // DTOs
+
     public class RegisterModel
     {
-
         public string Username { get; set; }
         public string Password { get; set; }
         public string ConfirmPassword { get; set; }
         public string Nombres { get; set; }
         public string ApellidoPaterno { get; set; }
-        public string ApellidoMaterno { get; set; }
-        public string FechaNacimiento { get; set; }
+        public string ApellidoMaterno { get; set; } // Aquí puedes poner string? si lo deseas
+        public DateTime? FechaNacimiento { get; set; }
         public string Pais { get; set; }
         public string Email { get; set; }
         public string Telefono { get; set; }

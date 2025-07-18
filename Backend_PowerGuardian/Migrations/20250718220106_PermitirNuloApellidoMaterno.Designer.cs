@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend_PowerGuardian.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250702092609_InitialIdentitySetup")]
-    partial class InitialIdentitySetup
+    [Migration("20250718220106_PermitirNuloApellidoMaterno")]
+    partial class PermitirNuloApellidoMaterno
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,7 +33,10 @@ namespace Backend_PowerGuardian.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<string>("Apellidos")
+                    b.Property<string>("ApellidoMaterno")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ApellidoPaterno")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -47,6 +50,9 @@ namespace Backend_PowerGuardian.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("FechaNacimiento")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -54,6 +60,7 @@ namespace Backend_PowerGuardian.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Nombres")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NormalizedEmail")
@@ -63,6 +70,10 @@ namespace Backend_PowerGuardian.Migrations
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Pais")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
