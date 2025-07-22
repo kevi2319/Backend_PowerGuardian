@@ -123,7 +123,8 @@ namespace Backend_PowerGuardian.Controllers
                 return Unauthorized("Credenciales inválidas");
 
             var token = await GenerateJwtToken(user);
-            return Ok(new { token, id = user.Id });
+            var roles = await _userManager.GetRolesAsync(user);
+            return Ok(new { token, id = user.Id, role = roles.FirstOrDefault() });
         }
 
         private async Task<string> GenerateJwtToken(ApplicationUser user)
