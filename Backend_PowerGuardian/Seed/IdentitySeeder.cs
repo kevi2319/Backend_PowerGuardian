@@ -1,8 +1,7 @@
 ﻿using Backend_PowerGuardian.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace Backend_PowerGuardian.Seed;   // ⬅️ carpeta + nombre del proyecto
-                                        //    (VS lo autocompleta si la carpeta se llama igual)
+namespace Backend_PowerGuardian.Seed;
 
 public static class IdentitySeeder
 {
@@ -11,7 +10,7 @@ public static class IdentitySeeder
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
-        string[] roles = { "Admin", "User" };
+        string[] roles = { "Admin", "Cliente" };
 
         // Crear roles si no existen
         foreach (var role in roles)
