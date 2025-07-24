@@ -19,17 +19,20 @@ namespace Backend_PowerGuardian.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
+        private readonly Data.ApplicationDbContext _context;
 
         public UserController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             RoleManager<IdentityRole> roleManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            Data.ApplicationDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
             _configuration = configuration;
+            _context = context;
         }
 
         [HttpGet("{id}")]
@@ -76,6 +79,10 @@ namespace Backend_PowerGuardian.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
+            if (await _userManager.FindByNameAsync(model.Username) != null)
+                return BadRequest("Ya existe un usuario con ese nombre de usuario");
+
+
             if (model.Password != model.ConfirmPassword)
                 return BadRequest("Las contraseñas no coinciden");
 
@@ -85,8 +92,17 @@ namespace Backend_PowerGuardian.Controllers
             if (await _userManager.Users.AnyAsync(u => u.PhoneNumber == model.Telefono))
                 return BadRequest("Ya existe un usuario con ese teléfono");
 
-            var user = new ApplicationUser
+            // Validar SKU
+            if (string.IsNullOrWhiteSpace(model.SKU))
+                return BadRequest("Debes ingresar un SKU válido");
 
+            var unidad = await _context.ProductoUnidades.FirstOrDefaultAsync(u => u.SKU == model.SKU);
+            if (unidad == null)
+                return BadRequest("El SKU ingresado no existe");
+            if (unidad.Usado)
+                return BadRequest("El SKU ya fue utilizado para un registro");
+
+            var user = new ApplicationUser
             {
                 UserName = model.Username,
                 Email = model.Email,
@@ -99,13 +115,23 @@ namespace Backend_PowerGuardian.Controllers
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
-            if (!result.Succeeded) return BadRequest(result.Errors);
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors?.Select(e => e.Description).ToArray();
+                return BadRequest(errors != null ? string.Join("\n", errors) : "Error desconocido al registrar usuario.");
+            }
 
             if (!await _roleManager.RoleExistsAsync("Cliente"))
                 await _roleManager.CreateAsync(new IdentityRole("Cliente"));
 
             await _userManager.AddToRoleAsync(user, "Cliente");
-            return Ok("Usuario registrado correctamente");
+
+            // Marcar SKU como usado y guardar fecha de compra
+            unidad.Usado = true;
+            unidad.FechaCompra = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Usuario registrado correctamente" });
         }
 
         [AllowAnonymous]
@@ -170,6 +196,7 @@ namespace Backend_PowerGuardian.Controllers
         public string Pais { get; set; }
         public string Email { get; set; }
         public string Telefono { get; set; }
+        public string SKU { get; set; }
     }
 
     public class LoginModel

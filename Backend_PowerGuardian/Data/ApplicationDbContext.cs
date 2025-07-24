@@ -12,7 +12,7 @@ namespace Backend_PowerGuardian.Data
         {
         }
 
-        // Aquí puedes agregar más DbSets si tienes otros modelos
-       
+        public DbSet<Producto> Productos { get; set; }
+        public DbSet<ProductoUnidad> ProductoUnidades { get; set; }
     }
 }
