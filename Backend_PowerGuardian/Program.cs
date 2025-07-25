@@ -38,8 +38,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
-            NameClaimType = ClaimTypes.Name
+            ClockSkew = TimeSpan.Zero
         };
+        
+        o.MapInboundClaims = false;
     });
 
 builder.Services.AddCors(o =>

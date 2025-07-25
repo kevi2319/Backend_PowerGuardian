@@ -1,4 +1,5 @@
 ﻿using Backend_PowerGuardian.Models;
+using Backend_PowerGuardian.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,6 @@ using System.Text;
 
 namespace Backend_PowerGuardian.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
@@ -36,6 +36,7 @@ namespace Backend_PowerGuardian.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> ObtenerUsuarioPorId(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -56,7 +57,129 @@ namespace Backend_PowerGuardian.Controllers
             });
         }
 
+        [HttpGet("debug-claims")]
+        [AllowAnonymous]
+        public IActionResult DebugClaims()
+        {
+            var authHeader = Request.Headers["Authorization"].FirstOrDefault();
+            if (authHeader != null && authHeader.StartsWith("Bearer "))
+            {
+                var token = authHeader.Substring(7);
+                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadJwtToken(token);
+                var claims = jsonToken.Claims.Select(c => new { c.Type, c.Value }).ToList();
+                
+                return Ok(new { 
+                    TokenReceived = true,
+                    AuthHeader = authHeader,
+                    Claims = claims,
+                    UserAuthenticated = User.Identity.IsAuthenticated,
+                    UserClaims = User.Claims.Select(c => new { c.Type, c.Value }).ToList(),
+                    UserIdentityName = User.Identity.Name,
+                    HasSubClaim = claims.Any(c => c.Type == "sub"),
+                    HasNameClaim = claims.Any(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"),
+                    HasRoleClaim = claims.Any(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
+                });
+            }
+            
+            return Ok(new { 
+                TokenReceived = false,
+                AuthHeader = authHeader,
+                Headers = Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString())
+            });
+        }
+
+        [HttpGet("me")]
+        [JwtAuthorize]
+        public async Task<IActionResult> ObtenerPerfilActual()
+        {
+            var authHeader = Request.Headers["Authorization"].FirstOrDefault();
+            var token = authHeader!.Substring(7);
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadJwtToken(token);
+            var userId = jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+
+            var user = await _userManager.FindByIdAsync(userId!);
+            if (user == null) return NotFound("Usuario no encontrado");
+
+            return Ok(new
+            {
+                user.Id,
+                user.UserName,
+                user.Email,
+                user.Nombres,
+                user.ApellidoPaterno,
+                user.ApellidoMaterno,
+                user.FechaNacimiento,
+                user.Pais,
+                user.PhoneNumber,
+                Roles = await _userManager.GetRolesAsync(user)
+            });
+        }
+
+        [HttpPut("me")]
+        [JwtAuthorize]
+        public async Task<IActionResult> ActualizarPerfilActual([FromBody] UpdateProfileModel model)
+        {
+            var authHeader = Request.Headers["Authorization"].FirstOrDefault();
+            var token = authHeader!.Substring(7);
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadJwtToken(token);
+            var userId = jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+
+            var user = await _userManager.FindByIdAsync(userId!);
+            if (user == null) return NotFound("Usuario no encontrado");
+
+            if (!string.IsNullOrEmpty(model.Nombres))
+                user.Nombres = model.Nombres;
+            
+            if (!string.IsNullOrEmpty(model.ApellidoPaterno))
+                user.ApellidoPaterno = model.ApellidoPaterno;
+            
+            if (!string.IsNullOrEmpty(model.ApellidoMaterno))
+                user.ApellidoMaterno = model.ApellidoMaterno;
+            
+            if (!string.IsNullOrEmpty(model.Email))
+                user.Email = model.Email;
+            
+            if (!string.IsNullOrEmpty(model.Telefono))
+                user.PhoneNumber = model.Telefono;
+            
+            if (!string.IsNullOrEmpty(model.Pais))
+                user.Pais = model.Pais;
+
+            if (model.FechaNacimiento.HasValue)
+                user.FechaNacimiento = model.FechaNacimiento;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors.Select(e => e.Description));
+
+            return Ok(new { message = "Perfil actualizado correctamente" });
+        }
+
+        [HttpPost("me/password")]
+        [JwtAuthorize]
+        public async Task<IActionResult> CambiarPassword([FromBody] ChangePasswordModel model)
+        {
+            var authHeader = Request.Headers["Authorization"].FirstOrDefault();
+            var token = authHeader!.Substring(7);
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadJwtToken(token);
+            var userId = jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+
+            var user = await _userManager.FindByIdAsync(userId!);
+            if (user == null) return NotFound("Usuario no encontrado");
+
+            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors.Select(e => e.Description));
+
+            return Ok(new { message = "Contraseña cambiada correctamente" });
+        }
+
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> ActualizarUsuario(string id, [FromBody] RegisterModel model)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -150,7 +273,13 @@ namespace Backend_PowerGuardian.Controllers
 
             var token = await GenerateJwtToken(user);
             var roles = await _userManager.GetRolesAsync(user);
-            return Ok(new { token, id = user.Id, role = roles.FirstOrDefault() });
+            return Ok(new {
+                token,
+                id = user.Id,
+                role = roles.FirstOrDefault(),
+                nombres = user.Nombres,
+                apellidoPaterno = user.ApellidoPaterno
+            });
         }
 
         private async Task<string> GenerateJwtToken(ApplicationUser user)
@@ -203,5 +332,22 @@ namespace Backend_PowerGuardian.Controllers
     {
         public string Username { get; set; }
         public string Password { get; set; }
+    }
+
+    public class UpdateProfileModel
+    {
+        public string? Nombres { get; set; }
+        public string? ApellidoPaterno { get; set; }
+        public string? ApellidoMaterno { get; set; }
+        public string? Email { get; set; }
+        public string? Telefono { get; set; }
+        public string? Pais { get; set; }
+        public DateTime? FechaNacimiento { get; set; }
+    }
+
+    public class ChangePasswordModel
+    {
+        public string CurrentPassword { get; set; }
+        public string NewPassword { get; set; }
     }
 }
