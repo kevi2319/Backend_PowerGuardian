@@ -33,17 +33,20 @@ namespace Backend_PowerGuardian.Controllers
         public async Task<ActionResult<IEnumerable<PublicProductoDto>>> GetProductosPublicos()
         {
             var productos = await _context.Productos
+                .Include(p => p.Unidades)
                 .Select(p => new PublicProductoDto
                 {
                     Id = p.Id,
                     Descripcion = p.Descripcion,
                     Precio = p.Precio,
-                    ImagenUrl = p.ImagenUrl
+                    ImagenUrl = p.ImagenUrl,
+                    StockDisponible = p.Unidades.Count(u => !u.Usado)
                 })
                 .ToListAsync();
 
             return Ok(productos);
         }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Producto>> GetProducto(int id)
