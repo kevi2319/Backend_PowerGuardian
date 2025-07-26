@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Backend_PowerGuardian.Models
 {
@@ -20,6 +21,7 @@ namespace Backend_PowerGuardian.Models
         // Relación: cada unidad pertenece a un producto
         [ForeignKey("Producto")]
         public int ProductoId { get; set; }
+        [JsonIgnore]
         public Producto Producto { get; set; }
     }
 }
