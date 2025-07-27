@@ -6,6 +6,8 @@ namespace Backend_PowerGuardian.Models
     {
         [Key]
         public int Id { get; set; }
+        
+        public string Nombre { get; internal set; }
 
         [MaxLength(500)]
         public string Descripcion { get; set; }

@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Backend_PowerGuardian.DTOs;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Backend_PowerGuardian.Services;
 
 namespace Backend_PowerGuardian.Controllers
 {
@@ -20,19 +22,22 @@ namespace Backend_PowerGuardian.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly Data.ApplicationDbContext _context;
+        private readonly IDispositivoService _dispositivoService;
 
         public UserController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             RoleManager<IdentityRole> roleManager,
             IConfiguration configuration,
-            Data.ApplicationDbContext context)
+            Data.ApplicationDbContext context,
+            IDispositivoService dispositivoService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
             _configuration = configuration;
             _context = context;
+            _dispositivoService = dispositivoService;
         }
 
         [HttpGet("{id}")]
@@ -90,7 +95,7 @@ namespace Backend_PowerGuardian.Controllers
         }
 
         [HttpGet("me")]
-        [JwtAuthorize]
+        [Authorize]
         public async Task<IActionResult> ObtenerPerfilActual()
         {
             var authHeader = Request.Headers["Authorization"].FirstOrDefault();
@@ -118,7 +123,7 @@ namespace Backend_PowerGuardian.Controllers
         }
 
         [HttpPut("me")]
-        [JwtAuthorize]
+        [Authorize]
         public async Task<IActionResult> ActualizarPerfilActual([FromBody] UpdateProfileModel model)
         {
             var authHeader = Request.Headers["Authorization"].FirstOrDefault();
@@ -159,7 +164,7 @@ namespace Backend_PowerGuardian.Controllers
         }
 
         [HttpPost("me/password")]
-        [JwtAuthorize]
+        [Authorize]
         public async Task<IActionResult> CambiarPassword([FromBody] ChangePasswordModel model)
         {
             var authHeader = Request.Headers["Authorization"].FirstOrDefault();
@@ -205,7 +210,6 @@ namespace Backend_PowerGuardian.Controllers
             if (await _userManager.FindByNameAsync(model.Username) != null)
                 return BadRequest("Ya existe un usuario con ese nombre de usuario");
 
-
             if (model.Password != model.ConfirmPassword)
                 return BadRequest("Las contraseñas no coinciden");
 
@@ -219,19 +223,20 @@ namespace Backend_PowerGuardian.Controllers
             if (string.IsNullOrWhiteSpace(model.SKU))
                 return BadRequest("Debes ingresar un SKU válido");
 
-            var unidad = await _context.ProductoUnidades.FirstOrDefaultAsync(u => u.SKU == model.SKU);
-            if (unidad == null)
-                return BadRequest("El SKU ingresado no existe");
-            if (unidad.Usado)
-                return BadRequest("El SKU ya fue utilizado para un registro");
+            var unidad = await _context.ProductoUnidades
+                .FirstOrDefaultAsync(u => u.SKU == model.SKU && !u.Usado);
 
+            if (unidad == null)
+                return BadRequest("El SKU ingresado no existe o ya fue utilizado.");
+
+            // Crear usuario
             var user = new ApplicationUser
             {
                 UserName = model.Username,
                 Email = model.Email,
                 Nombres = model.Nombres,
                 ApellidoPaterno = model.ApellidoPaterno,
-                ApellidoMaterno = model.ApellidoMaterno ?? "", // Evitar null
+                ApellidoMaterno = model.ApellidoMaterno ?? "",
                 FechaNacimiento = model.FechaNacimiento,
                 Pais = model.Pais,
                 PhoneNumber = model.Telefono
@@ -244,18 +249,28 @@ namespace Backend_PowerGuardian.Controllers
                 return BadRequest(errors != null ? string.Join("\n", errors) : "Error desconocido al registrar usuario.");
             }
 
+            // Asegurar rol
             if (!await _roleManager.RoleExistsAsync("Cliente"))
                 await _roleManager.CreateAsync(new IdentityRole("Cliente"));
 
             await _userManager.AddToRoleAsync(user, "Cliente");
 
-            // Marcar SKU como usado y guardar fecha de compra
+            // Crear dispositivo desde el SKU
+            var dispositivo = await _dispositivoService.CrearDesdeProductoUnidadAsync(unidad.Id, user.Id);
+            if (dispositivo == null)
+            {
+                // Aquí puedes incluso revertir la creación del usuario si lo deseas
+                return StatusCode(500, "Error al crear el dispositivo desde el SKU.");
+            }
+
+            // Marcar el SKU como usado
             unidad.Usado = true;
             unidad.FechaCompra = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Usuario registrado correctamente" });
+            return Ok(new { message = "Usuario registrado correctamente", dispositivoId = dispositivo.Id });
         }
+
 
         [AllowAnonymous]
         [HttpPost("login")]
@@ -288,11 +303,15 @@ namespace Backend_PowerGuardian.Controllers
 
             var claims = new List<Claim>
             {
-                new(JwtRegisteredClaimNames.Sub, user.Id),
-                new(ClaimTypes.Name, user.UserName),
-                new(JwtRegisteredClaimNames.Email, user.Email),
-                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim("id", user.Id),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Role, roles.FirstOrDefault() ?? "Cliente")
             };
+
 
             claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
@@ -309,45 +328,5 @@ namespace Backend_PowerGuardian.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-    }
-
-    // DTOs
-
-    public class RegisterModel
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string ConfirmPassword { get; set; }
-        public string Nombres { get; set; }
-        public string ApellidoPaterno { get; set; }
-        public string ApellidoMaterno { get; set; } // Aquí puedes poner string? si lo deseas
-        public DateTime? FechaNacimiento { get; set; }
-        public string Pais { get; set; }
-        public string Email { get; set; }
-        public string Telefono { get; set; }
-        public string SKU { get; set; }
-    }
-
-    public class LoginModel
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
-    }
-
-    public class UpdateProfileModel
-    {
-        public string? Nombres { get; set; }
-        public string? ApellidoPaterno { get; set; }
-        public string? ApellidoMaterno { get; set; }
-        public string? Email { get; set; }
-        public string? Telefono { get; set; }
-        public string? Pais { get; set; }
-        public DateTime? FechaNacimiento { get; set; }
-    }
-
-    public class ChangePasswordModel
-    {
-        public string CurrentPassword { get; set; }
-        public string NewPassword { get; set; }
     }
 }

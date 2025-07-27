@@ -10,6 +10,8 @@ namespace Backend_PowerGuardian.Models
         public DateTime?FechaNacimiento { get; set; }
         public string Pais { get; set; }
 
-        // ❌ No incluyas Username, Password, ConfirmPassword, Email ni Telefono
+        // Navegación hacia los dispositivos del usuario
+        public ICollection<Dispositivo> Dispositivos { get; set; }
+
     }
 }

@@ -14,5 +14,36 @@ namespace Backend_PowerGuardian.Data
 
         public DbSet<Producto> Productos { get; set; }
         public DbSet<ProductoUnidad> ProductoUnidades { get; set; }
+        public DbSet<Manual> Manuales { get; set; }
+        public DbSet<Dispositivo> Dispositivos { get; set; }
+        public DbSet<Resena> Resenas { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Relación uno a uno entre Dispositivo y ProductoUnidad
+            modelBuilder.Entity<Dispositivo>()
+                .HasOne(d => d.ProductoUnidad)
+                .WithOne()
+                .HasForeignKey<Dispositivo>(d => d.ProductoUnidadId);
+
+            // Relación muchos a uno entre Dispositivo y Usuario
+            modelBuilder.Entity<Dispositivo>()
+                .HasOne(d => d.Usuario)
+                .WithMany(u => u.Dispositivos)
+                .HasForeignKey(d => d.UsuarioId);
+
+            modelBuilder.Entity<Resena>()
+                .HasOne(r => r.Usuario)
+                .WithMany()
+                .HasForeignKey(r => r.UsuarioId);
+
+            modelBuilder.Entity<Resena>()
+                .HasOne(r => r.ProductoUnidad)
+                .WithMany()
+                .HasForeignKey(r => r.ProductoUnidadId);
+        }
+
     }
 }

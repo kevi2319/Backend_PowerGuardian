@@ -23,5 +23,7 @@ namespace Backend_PowerGuardian.Models
         public int ProductoId { get; set; }
         [JsonIgnore]
         public Producto Producto { get; set; }
+
+        public Dispositivo? Dispositivo { get; set; } 
     }
 }

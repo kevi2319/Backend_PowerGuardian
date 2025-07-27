@@ -4,6 +4,7 @@ using Backend_PowerGuardian.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend_PowerGuardian.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250726070604_DevicesMigration")]
+    partial class DevicesMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -126,9 +129,6 @@ namespace Backend_PowerGuardian.Migrations
                     b.Property<int>("ProductoUnidadId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ProductoUnidadId1")
-                        .HasColumnType("int");
-
                     b.Property<string>("UsuarioId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -137,10 +137,6 @@ namespace Backend_PowerGuardian.Migrations
 
                     b.HasIndex("ProductoUnidadId")
                         .IsUnique();
-
-                    b.HasIndex("ProductoUnidadId1")
-                        .IsUnique()
-                        .HasFilter("[ProductoUnidadId1] IS NOT NULL");
 
                     b.HasIndex("UsuarioId");
 
@@ -196,10 +192,6 @@ namespace Backend_PowerGuardian.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<decimal>("Precio")
                         .HasColumnType("decimal(18,2)");
 
@@ -235,40 +227,6 @@ namespace Backend_PowerGuardian.Migrations
                     b.HasIndex("ProductoId");
 
                     b.ToTable("ProductoUnidades");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.Resena", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Calificacion")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Comentario")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("ProductoUnidadId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UsuarioId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductoUnidadId");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("Resenas");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -412,10 +370,6 @@ namespace Backend_PowerGuardian.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Backend_PowerGuardian.Models.ProductoUnidad", null)
-                        .WithOne("Dispositivo")
-                        .HasForeignKey("Backend_PowerGuardian.Models.Dispositivo", "ProductoUnidadId1");
-
                     b.HasOne("Backend_PowerGuardian.Models.ApplicationUser", "Usuario")
                         .WithMany("Dispositivos")
                         .HasForeignKey("UsuarioId")
@@ -436,25 +390,6 @@ namespace Backend_PowerGuardian.Migrations
                         .IsRequired();
 
                     b.Navigation("Producto");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.Resena", b =>
-                {
-                    b.HasOne("Backend_PowerGuardian.Models.ProductoUnidad", "ProductoUnidad")
-                        .WithMany()
-                        .HasForeignKey("ProductoUnidadId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Backend_PowerGuardian.Models.ApplicationUser", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ProductoUnidad");
-
-                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -516,11 +451,6 @@ namespace Backend_PowerGuardian.Migrations
             modelBuilder.Entity("Backend_PowerGuardian.Models.Producto", b =>
                 {
                     b.Navigation("Unidades");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.ProductoUnidad", b =>
-                {
-                    b.Navigation("Dispositivo");
                 });
 #pragma warning restore 612, 618
         }
