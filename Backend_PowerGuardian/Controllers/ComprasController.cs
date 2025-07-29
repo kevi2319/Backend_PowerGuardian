@@ -30,14 +30,23 @@ public class ComprasController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("registrar")]
+    [HttpPost("comprar")]
     public async Task<IActionResult> RegistrarCompra([FromBody] CompraDto dto)
     {
         var email = dto.Email.Trim().ToLower();
 
-        // Generar SKU
-        var sku = "PG-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+        // Buscar unidad disponible del inventario
+        var inventario = await _context.Inventarios
+            .Where(i => i.ProductoId == dto.ProductoId && i.Estado == "disponible")
+            .FirstOrDefaultAsync();
 
+        if (inventario == null)
+            return BadRequest("No hay stock disponible para este producto");
+
+        // Generar SKU
+        var sku = "PG-" + Guid.NewGuid().ToString("N")[..8].ToUpper();
+
+        // Crear unidad
         var unidad = new ProductoUnidad
         {
             SKU = sku,
@@ -46,17 +55,25 @@ public class ComprasController : ControllerBase
         };
 
         _context.ProductoUnidades.Add(unidad);
+
+        // Marcar inventario como vendido y asignar al cliente (si ya existe)
+        var user = await _userManager.FindByEmailAsync(email);
+        inventario.Estado = "vendido";
+        if (user != null)
+        {
+            inventario.UsuarioId = user.Id;
+            await _correoService.EnviarCorreoAsociarDispositivo(email, sku);
+        }
+        else
+        {
+            await _correoService.EnviarCorreoRegistroConSku(email, sku);
+        }
+
         await _context.SaveChangesAsync();
 
-        var user = await _userManager.FindByEmailAsync(email);
-
-        if (user != null)
-            await _correoService.EnviarCorreoAsociarDispositivo(email, sku);
-        else
-            await _correoService.EnviarCorreoRegistroConSku(email, sku);
-
-        return Ok(new { message = "Compra registrada y correo enviado." });
+        return Ok(new { message = "Compra registrada correctamente." });
     }
+
 
     [Authorize]
     [HttpGet("mis")]

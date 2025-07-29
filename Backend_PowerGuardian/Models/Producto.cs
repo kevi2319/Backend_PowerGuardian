@@ -6,7 +6,7 @@ namespace Backend_PowerGuardian.Models
     {
         [Key]
         public int Id { get; set; }
-        
+
         public string Nombre { get; internal set; }
 
         [MaxLength(500)]
@@ -19,5 +19,8 @@ namespace Backend_PowerGuardian.Models
 
         // Relación: Un producto tiene muchas unidades
         public ICollection<ProductoUnidad> Unidades { get; set; }
+
+        // Relación con receta (materias primas asociadas)
+        public ICollection<RecetaProducto> RecetaProductos { get; set; }
     }
 }

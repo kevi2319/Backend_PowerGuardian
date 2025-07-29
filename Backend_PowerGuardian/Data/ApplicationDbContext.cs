@@ -17,6 +17,16 @@ namespace Backend_PowerGuardian.Data
         public DbSet<Manual> Manuales { get; set; }
         public DbSet<Dispositivo> Dispositivos { get; set; }
         public DbSet<Resena> Resenas { get; set; }
+        public DbSet<Inventario> Inventarios { get; set; }
+        public DbSet<Proveedor> Proveedores { get; set; }
+        public DbSet<CompraProveedor> ComprasProveedor { get; set; }
+        public DbSet<DetalleCompraProveedor> DetallesCompraProveedor { get; set; }
+        public DbSet<MateriaPrima> MateriasPrimas { get; set; }
+        public DbSet<RecetaProducto> RecetasProducto { get; set; }
+
+
+
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

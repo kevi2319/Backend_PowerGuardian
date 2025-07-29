@@ -9,6 +9,8 @@ namespace Backend_PowerGuardian.Models
         public string? ApellidoMaterno { get; set; }
         public DateTime?FechaNacimiento { get; set; }
         public string Pais { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
         // Navegación hacia los dispositivos del usuario
         public ICollection<Dispositivo> Dispositivos { get; set; }
