@@ -14,5 +14,8 @@ namespace Backend_PowerGuardian.Data
 
         public DbSet<Producto> Productos { get; set; }
         public DbSet<ProductoUnidad> ProductoUnidades { get; set; }
+
+        public DbSet<Contacto> Contactos { get; set; }
+        public DbSet<Backend_PowerGuardian.Models.Opinion> Opinion { get; set; } = default!;
     }
 }

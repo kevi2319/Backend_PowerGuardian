@@ -4,6 +4,7 @@ using Backend_PowerGuardian.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend_PowerGuardian.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250728025430_AgregacionDeModeloContacto")]
+    partial class AgregacionDeModeloContacto
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -106,11 +109,14 @@ namespace Backend_PowerGuardian.Migrations
 
             modelBuilder.Entity("Backend_PowerGuardian.Models.Contacto", b =>
                 {
-                    b.Property<int>("ContactoId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ContactoId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ContactoId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Correo")
                         .IsRequired()
@@ -129,40 +135,14 @@ namespace Backend_PowerGuardian.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("ProductoId")
+                    b.Property<int?>("ProductoId")
                         .HasColumnType("int");
 
-                    b.HasKey("ContactoId");
+                    b.HasKey("Id");
 
                     b.HasIndex("ProductoId");
 
                     b.ToTable("Contactos");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.Opinion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Mensaje")
-                        .IsRequired()
-                        .HasMaxLength(800)
-                        .HasColumnType("nvarchar(800)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Opinion");
                 });
 
             modelBuilder.Entity("Backend_PowerGuardian.Models.Producto", b =>
@@ -357,9 +337,7 @@ namespace Backend_PowerGuardian.Migrations
                 {
                     b.HasOne("Backend_PowerGuardian.Models.Producto", "Producto")
                         .WithMany()
-                        .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ProductoId");
 
                     b.Navigation("Producto");
                 });

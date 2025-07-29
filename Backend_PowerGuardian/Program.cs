@@ -109,4 +109,5 @@ using (var scope = app.Services.CreateScope())
     ProductoSeeder.Seed(scope.ServiceProvider);
 }
 
+
 app.Run();
