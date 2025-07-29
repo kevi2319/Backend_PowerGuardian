@@ -4,6 +4,7 @@ using Backend_PowerGuardian.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend_PowerGuardian.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250728052331_IntegracionOpinionModel")]
+    partial class IntegracionOpinionModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -49,12 +52,6 @@ namespace Backend_PowerGuardian.Migrations
 
                     b.Property<DateTime?>("FechaNacimiento")
                         .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("FechaRegistro")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -171,188 +168,6 @@ namespace Backend_PowerGuardian.Migrations
                     b.ToTable("Opinion");
                 });
 
-            modelBuilder.Entity("Backend_PowerGuardian.Models.CompraProveedor", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("FechaCompra")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Notas")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProveedorId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProveedorId");
-
-                    b.ToTable("ComprasProveedor");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.DetalleCompraProveedor", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Cantidad")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CompraProveedorId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductoId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompraProveedorId");
-
-                    b.HasIndex("ProductoId");
-
-                    b.ToTable("DetallesCompraProveedor");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.Dispositivo", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Estado")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("FechaRegistro")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProductoUnidadId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ProductoUnidadId1")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UsuarioId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductoUnidadId")
-                        .IsUnique();
-
-                    b.HasIndex("ProductoUnidadId1")
-                        .IsUnique()
-                        .HasFilter("[ProductoUnidadId1] IS NOT NULL");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("Dispositivos");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.Inventario", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Estado")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("FechaIngreso")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Notas")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProductoId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UsuarioId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductoId");
-
-                    b.ToTable("Inventarios");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.Manual", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Descripcion")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Eliminado")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("FechaPublicacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UrlArchivo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Manuales");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.MateriaPrima", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("CostoUnitario")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UnidadMedida")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("MateriasPrimas");
-                });
-
             modelBuilder.Entity("Backend_PowerGuardian.Models.Producto", b =>
                 {
                     b.Property<int>("Id")
@@ -370,10 +185,6 @@ namespace Backend_PowerGuardian.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Precio")
                         .HasColumnType("decimal(18,2)");
@@ -410,100 +221,6 @@ namespace Backend_PowerGuardian.Migrations
                     b.HasIndex("ProductoId");
 
                     b.ToTable("ProductoUnidades");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.Proveedor", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Correo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Direccion")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Pais")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Telefono")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Proveedores");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.RecetaProducto", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Cantidad")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("MateriaPrimaId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductoId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MateriaPrimaId");
-
-                    b.HasIndex("ProductoId");
-
-                    b.ToTable("RecetasProducto");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.Resena", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Calificacion")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Comentario")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("ProductoUnidadId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UsuarioId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductoUnidadId");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("Resenas");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -650,70 +367,6 @@ namespace Backend_PowerGuardian.Migrations
                     b.Navigation("Producto");
                 });
 
-            modelBuilder.Entity("Backend_PowerGuardian.Models.CompraProveedor", b =>
-                {
-                    b.HasOne("Backend_PowerGuardian.Models.Proveedor", "Proveedor")
-                        .WithMany("Compras")
-                        .HasForeignKey("ProveedorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Proveedor");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.DetalleCompraProveedor", b =>
-                {
-                    b.HasOne("Backend_PowerGuardian.Models.CompraProveedor", "CompraProveedor")
-                        .WithMany("Detalles")
-                        .HasForeignKey("CompraProveedorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Backend_PowerGuardian.Models.Producto", "Producto")
-                        .WithMany()
-                        .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CompraProveedor");
-
-                    b.Navigation("Producto");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.Dispositivo", b =>
-                {
-                    b.HasOne("Backend_PowerGuardian.Models.ProductoUnidad", "ProductoUnidad")
-                        .WithOne()
-                        .HasForeignKey("Backend_PowerGuardian.Models.Dispositivo", "ProductoUnidadId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Backend_PowerGuardian.Models.ProductoUnidad", null)
-                        .WithOne("Dispositivo")
-                        .HasForeignKey("Backend_PowerGuardian.Models.Dispositivo", "ProductoUnidadId1");
-
-                    b.HasOne("Backend_PowerGuardian.Models.ApplicationUser", "Usuario")
-                        .WithMany("Dispositivos")
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ProductoUnidad");
-
-                    b.Navigation("Usuario");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.Inventario", b =>
-                {
-                    b.HasOne("Backend_PowerGuardian.Models.Producto", "Producto")
-                        .WithMany()
-                        .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Producto");
-                });
-
             modelBuilder.Entity("Backend_PowerGuardian.Models.ProductoUnidad", b =>
                 {
                     b.HasOne("Backend_PowerGuardian.Models.Producto", "Producto")
@@ -723,44 +376,6 @@ namespace Backend_PowerGuardian.Migrations
                         .IsRequired();
 
                     b.Navigation("Producto");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.RecetaProducto", b =>
-                {
-                    b.HasOne("Backend_PowerGuardian.Models.MateriaPrima", "MateriaPrima")
-                        .WithMany()
-                        .HasForeignKey("MateriaPrimaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Backend_PowerGuardian.Models.Producto", "Producto")
-                        .WithMany()
-                        .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("MateriaPrima");
-
-                    b.Navigation("Producto");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.Resena", b =>
-                {
-                    b.HasOne("Backend_PowerGuardian.Models.ProductoUnidad", "ProductoUnidad")
-                        .WithMany()
-                        .HasForeignKey("ProductoUnidadId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Backend_PowerGuardian.Models.ApplicationUser", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ProductoUnidad");
-
-                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -814,29 +429,9 @@ namespace Backend_PowerGuardian.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Backend_PowerGuardian.Models.ApplicationUser", b =>
-                {
-                    b.Navigation("Dispositivos");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.CompraProveedor", b =>
-                {
-                    b.Navigation("Detalles");
-                });
-
             modelBuilder.Entity("Backend_PowerGuardian.Models.Producto", b =>
                 {
                     b.Navigation("Unidades");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.ProductoUnidad", b =>
-                {
-                    b.Navigation("Dispositivo");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.Proveedor", b =>
-                {
-                    b.Navigation("Compras");
                 });
 #pragma warning restore 612, 618
         }

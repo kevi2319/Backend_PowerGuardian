@@ -55,5 +55,8 @@ namespace Backend_PowerGuardian.Data
                 .HasForeignKey(r => r.ProductoUnidadId);
         }
 
+
+        public DbSet<Contacto> Contactos { get; set; }
+        public DbSet<Backend_PowerGuardian.Models.Opinion> Opinion { get; set; } = default!;
     }
 }
