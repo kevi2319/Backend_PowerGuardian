@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MQTTnet;
+using MQTTnet.Client;
 using System.Security.Claims;
 using System.Text;
 
@@ -28,6 +30,8 @@ builder.Services.ConfigureApplicationCookie(o =>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
+        o.RequireHttpsMetadata = false;
+        o.SaveToken = true;
         o.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -38,7 +42,34 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+            RoleClaimType = ClaimTypes.Role,
+        };
+        // Eventos para depuraci�n de la autenticaci�n JWT
+        o.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                // Este log te dir� por qu� fall� la autenticaci�n
+                Console.WriteLine($"Authentication failed: {context.Exception.Message}");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                // Este log te confirmar� si el token fue validado exitosamente
+                Console.WriteLine($"Token validated successfully for user: {context.Principal?.Identity?.Name}");
+                return Task.CompletedTask;
+            },
+            OnMessageReceived = context =>
+            {
+                // Este log te mostrar� si el token Bearer fue recibido
+                var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                if (!string.IsNullOrEmpty(token))
+                {
+                    Console.WriteLine($"Token received in request: {token.Substring(0, Math.Min(token.Length, 30))}..."); // Log parcial del token
+                }
+                return Task.CompletedTask;
+            }
         };
         
         o.MapInboundClaims = false;
@@ -56,11 +87,25 @@ builder.Services.AddAuthorization(o =>
 builder.Services.AddLogging(l =>
 {
     l.AddConsole();
-    l.SetMinimumLevel(LogLevel.Debug);
+    l.SetMinimumLevel(LogLevel.Debug); //PARA VER LOS LOGS DEL SERVICIO
 });
+
+// REGISTRO DEL CLIENTE MQTT PARA INYECCION DE DEPENDENCIAS 
+// ENCARGADO DE CREAR LAS INSTANCIAS DE IMQTTCLIENT QUE SE PUEDE INYECTAR EN CNTROLADORES
+builder.Services.AddSingleton<IMqttClient>(sp => 
+{
+    var mqttFactory = new MqttFactory();
+    var mqttClient = mqttFactory.CreateMqttClient();
+    return mqttClient;
+});
+
+// REGISTRO DEL PROTOCOLO MQTT
+builder.Services.AddHostedService<Backend_PowerGuardian.Services.MqttDataReceiverService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// CONFIGURACION DE SWAGGER / OPENAPI
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Backend Power Guardian API", Version = "v1" });
@@ -100,6 +145,7 @@ app.UseCors("AllowLocalhost");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.Urls.Add("http://0.0.0.0:7009"); // Escucha en todas las IPs en el puerto 7009
 
 using (var scope = app.Services.CreateScope())
 {

@@ -14,5 +14,12 @@ namespace Backend_PowerGuardian.Data
 
         public DbSet<Producto> Productos { get; set; }
         public DbSet<ProductoUnidad> ProductoUnidades { get; set; }
+        public DbSet<PzemReading> PzemReadings { get; set; } // PARA USAR EL PROTOCOLO MQTT
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+        }
+    
     }
 }

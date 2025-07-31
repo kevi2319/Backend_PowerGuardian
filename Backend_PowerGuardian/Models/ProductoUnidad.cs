@@ -21,5 +21,11 @@ namespace Backend_PowerGuardian.Models
         [ForeignKey("Producto")]
         public int ProductoId { get; set; }
         public Producto Producto { get; set; }
+
+        // Para almacenar la Mac del ESP32 que esta vinculada a la undiad
+        [MaxLength(25)]
+        public string? DeviceId { get; set; }
+
+        public string? UserId { get; set; }
     }
 }

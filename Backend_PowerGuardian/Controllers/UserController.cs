@@ -11,6 +11,7 @@ using System.Text;
 
 namespace Backend_PowerGuardian.Controllers
 {
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
@@ -205,7 +206,6 @@ namespace Backend_PowerGuardian.Controllers
             if (await _userManager.FindByNameAsync(model.Username) != null)
                 return BadRequest("Ya existe un usuario con ese nombre de usuario");
 
-
             if (model.Password != model.ConfirmPassword)
                 return BadRequest("Las contraseñas no coinciden");
 
@@ -252,6 +252,7 @@ namespace Backend_PowerGuardian.Controllers
             // Marcar SKU como usado y guardar fecha de compra
             unidad.Usado = true;
             unidad.FechaCompra = DateTime.UtcNow;
+            unidad.UserId = user.Id;
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Usuario registrado correctamente" });
@@ -311,7 +312,7 @@ namespace Backend_PowerGuardian.Controllers
         }
     }
 
-    // DTOs
+    // DTOs para el registro y login
 
     public class RegisterModel
     {
