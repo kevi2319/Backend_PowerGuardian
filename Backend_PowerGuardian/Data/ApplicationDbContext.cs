@@ -23,6 +23,7 @@ namespace Backend_PowerGuardian.Data
         public DbSet<DetalleCompraProveedor> DetallesCompraProveedor { get; set; }
         public DbSet<MateriaPrima> MateriasPrimas { get; set; }
         public DbSet<RecetaProducto> RecetasProducto { get; set; }
+        public DbSet<ProveedorProducto> ProveedorProductos { get; set; }
 
 
 
@@ -53,6 +54,22 @@ namespace Backend_PowerGuardian.Data
                 .HasOne(r => r.ProductoUnidad)
                 .WithMany()
                 .HasForeignKey(r => r.ProductoUnidadId);
+
+            // Configurar relación muchos a muchos entre Proveedor y Producto
+            modelBuilder.Entity<ProveedorProducto>()
+                .HasOne(pp => pp.Proveedor)
+                .WithMany(p => p.ProveedorProductos)
+                .HasForeignKey(pp => pp.ProveedorId);
+
+            modelBuilder.Entity<ProveedorProducto>()
+                .HasOne(pp => pp.Producto)
+                .WithMany(p => p.ProveedorProductos)
+                .HasForeignKey(pp => pp.ProductoId);
+
+            // Índice único para evitar duplicados
+            modelBuilder.Entity<ProveedorProducto>()
+                .HasIndex(pp => new { pp.ProveedorId, pp.ProductoId })
+                .IsUnique();
         }
 
 
