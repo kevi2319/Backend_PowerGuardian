@@ -23,6 +23,157 @@ public class AdminController : ControllerBase
         _context = context;
     }
 
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetDashboardData()
+    {
+        try
+        {
+            // 1. Resumen de ventas
+            var ventasData = await GetVentasResumen();
+            
+            // 2. Estado del inventario
+            var inventarioData = await GetInventarioResumen();
+            
+            // 3. Usuarios
+            var usuariosData = await GetUsuariosResumen();
+            
+            // 4. Reseñas
+            var resenasData = await GetResenasResumen();
+            
+            // 5. Dispositivos
+            var dispositivosData = await GetDispositivosResumen();
+
+            var dashboardData = new
+            {
+                Ventas = ventasData,
+                Inventario = inventarioData,
+                Usuarios = usuariosData,
+                Resenas = resenasData,
+                Dispositivos = dispositivosData
+            };
+
+            return Ok(dashboardData);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en dashboard: {ex.Message}");
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
+
+    private async Task<object> GetVentasResumen()
+    {
+        var fechaLimite = DateTime.UtcNow.AddDays(-7);
+        
+        var totalUnidadesVendidas = await _context.ProductoUnidades
+            .CountAsync(pu => pu.Usado);
+            
+        var ventasUltimos7Dias = await _context.ProductoUnidades
+            .Where(pu => pu.Usado && pu.FechaCompra >= fechaLimite)
+            .CountAsync();
+            
+        var ingresosEstimados = await _context.ProductoUnidades
+            .Where(pu => pu.Usado)
+            .Include(pu => pu.Producto)
+            .SumAsync(pu => pu.Producto.Precio);
+
+        return new
+        {
+            TotalUnidadesVendidas = totalUnidadesVendidas,
+            VentasUltimos7Dias = ventasUltimos7Dias,
+            IngresosEstimados = ingresosEstimados
+        };
+    }
+
+    private async Task<object> GetInventarioResumen()
+    {
+        var inventarioPorProducto = await _context.Inventarios
+            .Include(i => i.Producto)
+            .GroupBy(i => new { i.ProductoId, i.Producto.Nombre })
+            .Select(g => new
+            {
+                ProductoId = g.Key.ProductoId,
+                ProductoNombre = g.Key.Nombre,
+                Disponibles = g.Count(i => i.Estado == "disponible"),
+                Danadas = g.Count(i => i.Estado == "dañado" || i.Estado == "devuelto"),
+                Total = g.Count()
+            })
+            .ToListAsync();
+
+        var productosSinStock = inventarioPorProducto.Count(p => p.Disponibles == 0);
+        var totalDisponibles = inventarioPorProducto.Sum(p => p.Disponibles);
+        var totalDanadas = inventarioPorProducto.Sum(p => p.Danadas);
+
+        return new
+        {
+            TotalDisponibles = totalDisponibles,
+            TotalDanadas = totalDanadas,
+            ProductosSinStock = productosSinStock,
+            DetalleProductos = inventarioPorProducto
+        };
+    }
+
+    private async Task<object> GetUsuariosResumen()
+    {
+        var usuarios = await _userManager.Users.ToListAsync();
+        var clientes = new List<ApplicationUser>();
+        
+        foreach (var usuario in usuarios)
+        {
+            if (await _userManager.IsInRoleAsync(usuario, "Cliente"))
+            {
+                clientes.Add(usuario);
+            }
+        }
+
+        var totalClientes = clientes.Count;
+        var clientesActivos = clientes.Count(c => c.IsActive);
+        var clientesDesactivados = totalClientes - clientesActivos;
+
+        return new
+        {
+            TotalClientes = totalClientes,
+            ClientesActivos = clientesActivos,
+            ClientesDesactivados = clientesDesactivados
+        };
+    }
+
+    private async Task<object> GetResenasResumen()
+    {
+        var resenas = await _context.Resenas.ToListAsync();
+        var totalResenas = resenas.Count;
+        var ultimaResena = await _context.Resenas
+            .OrderByDescending(r => r.Fecha)
+            .FirstOrDefaultAsync();
+
+        return new
+        {
+            TotalResenas = totalResenas,
+            UltimaResena = ultimaResena?.Fecha,
+            UltimaResenaTexto = ultimaResena?.Comentario != null ? 
+                ultimaResena.Comentario.Substring(0, Math.Min(50, ultimaResena.Comentario.Length)) : 
+                null
+        };
+    }
+
+    private async Task<object> GetDispositivosResumen()
+    {
+        var fechaLimite = DateTime.UtcNow.AddDays(-7);
+        
+        var totalDispositivos = await _context.Dispositivos.CountAsync();
+        var dispositivosEncendidos = await _context.Dispositivos
+            .CountAsync(d => d.Estado == "encendido");
+        var dispositivosNuevos = await _context.Dispositivos
+            .CountAsync(d => d.FechaRegistro >= fechaLimite);
+
+        return new
+        {
+            TotalDispositivos = totalDispositivos,
+            DispositivosEncendidos = dispositivosEncendidos,
+            DispositivosNuevos = dispositivosNuevos
+        };
+    }
+
     [HttpGet("clientes")]
     public async Task<IActionResult> ObtenerClientes()
     {
@@ -41,7 +192,7 @@ public class AdminController : ControllerBase
         {
             Id = u.Id,
             NombreCompleto = $"{u.Nombres} {u.ApellidoPaterno} {u.ApellidoMaterno}".Trim(),
-            Email = u.Email,
+            Email = u.Email ?? "",
             Telefono = u.PhoneNumber ?? "",
             FechaRegistro = u.FechaRegistro,
             Dispositivos = _context.Dispositivos.Count(d => d.UsuarioId == u.Id),
@@ -75,6 +226,29 @@ public class AdminController : ControllerBase
         await _userManager.UpdateAsync(usuario);
 
         return Ok(new { message = "Usuario activado correctamente" });
+    }
+
+    [HttpPut("clientes/{id}")]
+    public async Task<IActionResult> ActualizarCliente(string id, [FromBody] ActualizarClienteDto dto)
+    {
+        var usuario = await _userManager.FindByIdAsync(id);
+        if (usuario == null) return NotFound("Usuario no encontrado");
+
+        // Actualizar los campos
+        usuario.Nombres = dto.Nombres;
+        usuario.ApellidoPaterno = dto.ApellidoPaterno;
+        usuario.ApellidoMaterno = dto.ApellidoMaterno;
+        usuario.Email = dto.Email;
+        usuario.UserName = dto.Email; // Mantener consistencia
+        usuario.PhoneNumber = dto.PhoneNumber;
+
+        var result = await _userManager.UpdateAsync(usuario);
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors);
+        }
+
+        return Ok(new { message = "Cliente actualizado correctamente" });
     }
 
     [HttpPost("inventario")]
@@ -123,6 +297,24 @@ public class AdminController : ControllerBase
         return Ok(new { message = "Unidad eliminada correctamente." });
     }
 
+    [HttpPost("inventario/{id}/corregir-estado")]
+    public async Task<IActionResult> CorregirEstadoInventario(int id)
+    {
+        var inventario = await _context.Inventarios.FindAsync(id);
+        if (inventario == null) return NotFound("Item de inventario no encontrado");
+
+        // Si está marcado como vendido pero no tiene usuario asignado, 
+        // significa que fue marcado manualmente y debe volver a disponible
+        if (inventario.Estado == "vendido" && string.IsNullOrEmpty(inventario.UsuarioId))
+        {
+            inventario.Estado = "disponible";
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Estado corregido a 'disponible'" });
+        }
+
+        return BadRequest("El item no necesita corrección");
+    }
+
     [HttpGet("inventario")]
     public async Task<IActionResult> ListarInventario()
     {
@@ -130,26 +322,46 @@ public class AdminController : ControllerBase
             .Include(i => i.Producto)
             .ToListAsync();
 
-        var inventarioDtos = inventarios.Select(i => new InventarioDto
+        var inventarioDtos = new List<InventarioDto>();
+
+        foreach (var i in inventarios)
         {
-            Id = i.Id,
-            ProductoId = i.ProductoId,
-            ProductoNombre = i.Producto.Nombre,
-            Estado = i.Estado,
-            FechaIngreso = i.FechaIngreso,
-            Notas = i.Notas,
+            var dto = new InventarioDto
+            {
+                Id = i.Id,
+                ProductoId = i.ProductoId,
+                ProductoNombre = i.Producto.Nombre,
+                Estado = i.Estado,
+                FechaIngreso = i.FechaIngreso,
+                Notas = i.Notas
+            };
 
-            Sku = _context.ProductoUnidades
-                .Where(p => p.ProductoId == i.ProductoId && p.Usado && i.UsuarioId != null)
-                .OrderByDescending(p => p.FechaCompra)
-                .Select(p => p.SKU)
-                .FirstOrDefault(),
+            // Si el item está vendido, buscar el SKU correspondiente
+            if (i.Estado == "vendido")
+            {
+                // Intentar correlación directa por ID
+                var productoUnidadDirecta = await _context.ProductoUnidades
+                    .Where(pu => pu.Id == i.Id && pu.ProductoId == i.ProductoId)
+                    .FirstOrDefaultAsync();
 
-            ClienteUsuario = _context.Users
-                .Where(u => u.Id == i.UsuarioId)
-                .Select(u => u.UserName)
-                .FirstOrDefault()
-        });
+                if (productoUnidadDirecta != null)
+                {
+                    dto.Sku = productoUnidadDirecta.SKU;
+                }
+                else
+                {
+                    // Correlación por ProductoUnidad más reciente del mismo producto
+                    var productoUnidad = await _context.ProductoUnidades
+                        .Where(pu => pu.ProductoId == i.ProductoId)
+                        .OrderByDescending(pu => pu.Id)
+                        .FirstOrDefaultAsync();
+
+                    dto.Sku = productoUnidad?.SKU ?? "Sin SKU";
+                }
+            }
+
+            inventarioDtos.Add(dto);
+        }
 
         return Ok(inventarioDtos);
     }
@@ -283,6 +495,74 @@ public class AdminController : ControllerBase
         return Ok();
     }
 
+    // Gestión de relación Proveedor-Producto
+    [HttpPost("proveedores/{proveedorId}/productos")]
+    public async Task<IActionResult> AsignarProductoAProveedor(int proveedorId, [FromBody] AsignarProductoProveedorDto dto)
+    {
+        // Verificar que el proveedor existe
+        if (!await _context.Proveedores.AnyAsync(p => p.Id == proveedorId))
+            return BadRequest("Proveedor no encontrado");
+
+        // Verificar que el producto existe
+        if (!await _context.Productos.AnyAsync(p => p.Id == dto.ProductoId))
+            return BadRequest("Producto no encontrado");
+
+        // Verificar que no existe ya la relación
+        var existeRelacion = await _context.ProveedorProductos
+            .AnyAsync(pp => pp.ProveedorId == proveedorId && pp.ProductoId == dto.ProductoId);
+
+        if (existeRelacion)
+            return BadRequest("El producto ya está asignado a este proveedor");
+
+        var proveedorProducto = new ProveedorProducto
+        {
+            ProveedorId = proveedorId,
+            ProductoId = dto.ProductoId,
+            PrecioProveedor = dto.PrecioProveedor,
+            Activo = true
+        };
+
+        _context.ProveedorProductos.Add(proveedorProducto);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Producto asignado al proveedor correctamente" });
+    }
+
+    [HttpGet("proveedores/{proveedorId}/productos")]
+    public async Task<IActionResult> ObtenerProductosDeProveedor(int proveedorId)
+    {
+        var productos = await _context.ProveedorProductos
+            .Include(pp => pp.Producto)
+            .Where(pp => pp.ProveedorId == proveedorId && pp.Activo)
+            .Select(pp => new ProveedorProductoDto
+            {
+                Id = pp.Id,
+                ProveedorId = pp.ProveedorId,
+                ProductoId = pp.ProductoId,
+                ProductoNombre = pp.Producto.Nombre,
+                PrecioProveedor = pp.PrecioProveedor,
+                Activo = pp.Activo
+            })
+            .ToListAsync();
+
+        return Ok(productos);
+    }
+
+    [HttpDelete("proveedores/{proveedorId}/productos/{productoId}")]
+    public async Task<IActionResult> RemoverProductoDeProveedor(int proveedorId, int productoId)
+    {
+        var relacion = await _context.ProveedorProductos
+            .FirstOrDefaultAsync(pp => pp.ProveedorId == proveedorId && pp.ProductoId == productoId);
+
+        if (relacion == null)
+            return NotFound("Relación no encontrada");
+
+        _context.ProveedorProductos.Remove(relacion);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Producto removido del proveedor" });
+    }
+
     [HttpPost("compras-proveedor")]
     public async Task<IActionResult> RegistrarCompraProveedor([FromBody] CompraProveedorDto dto)
     {
@@ -314,7 +594,7 @@ public class AdminController : ControllerBase
                     ProductoId = detalle.ProductoId,
                     Estado = "disponible",
                     FechaIngreso = DateTime.UtcNow,
-                    Notas = $"Agregado por compra ID {compra.Id}"
+                    Notas = $"Agregado por compra a proveedor con ID {compra.Id}"
                 });
             }
         }
@@ -427,7 +707,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("recetas")]
-    public async Task<IActionResult> Crear([FromBody] RecetaProductoDto dto)
+    public async Task<IActionResult> Crear([FromBody] CrearRecetaProductoDto dto)
     {
         var receta = new RecetaProducto
         {
@@ -441,6 +721,7 @@ public class AdminController : ControllerBase
         return Ok(new { message = "Receta registrada" });
     }
 
+
     [HttpDelete("recetas/{id}")]
     public async Task<IActionResult> EliminarReceta(int id)
     {
@@ -451,6 +732,31 @@ public class AdminController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok(new { message = "Receta eliminada" });
     }
+
+    // ventas
+    [HttpGet("ventas")]
+    public async Task<IActionResult> HistorialVentas()
+    {
+        var ventasData = await _context.ProductoUnidades
+            .Include(p => p.Producto)
+            .Include(p => p.Dispositivo)
+            .ThenInclude(d => d!.Usuario)
+            .Where(p => p.Usado)
+            .ToListAsync();
+
+        var ventas = ventasData.Select(p => new VentaDto
+        {
+            SKU = p.SKU,
+            Producto = p.Producto.Nombre,
+            Precio = p.Producto.Precio,
+            FechaCompra = p.FechaCompra,
+            Username = p.Dispositivo?.Usuario?.UserName ?? "—"
+        }).ToList();
+
+        return Ok(ventas);
+    }
+
+
 
 }
 

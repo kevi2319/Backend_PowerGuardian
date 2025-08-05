@@ -11,6 +11,8 @@ namespace Backend_PowerGuardian.Models
         public bool Activo { get; set; } = true;
         public ICollection<CompraProveedor> Compras { get; set; } = new List<CompraProveedor>();
 
+        // Relación muchos a muchos con Productos
+        public ICollection<ProveedorProducto> ProveedorProductos { get; set; } = new List<ProveedorProducto>();
     }
 
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.IO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend_PowerGuardian.Data;
@@ -33,14 +34,14 @@ namespace Backend_PowerGuardian.Controllers
         public async Task<ActionResult<IEnumerable<PublicProductoDto>>> GetProductosPublicos()
         {
             var productos = await _context.Productos
-                .Include(p => p.Unidades)
                 .Select(p => new PublicProductoDto
                 {
                     Id = p.Id,
+                    Nombre = p.Nombre,
                     Descripcion = p.Descripcion,
                     Precio = p.Precio,
                     ImagenUrl = p.ImagenUrl,
-                    StockDisponible = p.Unidades.Count(u => !u.Usado)
+                    StockDisponible = _context.Inventarios.Count(i => i.ProductoId == p.Id && i.Estado == "disponible")
                 })
                 .ToListAsync();
 
@@ -141,6 +142,50 @@ namespace Backend_PowerGuardian.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { mensaje = "Stock agregado", cantidad });
+        }
+
+        [HttpPost("subir-imagen")]
+        public async Task<IActionResult> SubirImagen(IFormFile imagen)
+        {
+            if (imagen == null || imagen.Length == 0)
+                return BadRequest("No se ha proporcionado ninguna imagen");
+
+            // Validar tipo de archivo
+            var tiposPermitidos = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
+            if (!tiposPermitidos.Contains(imagen.ContentType.ToLower()))
+                return BadRequest("Tipo de archivo no válido. Solo se permiten JPG, PNG y GIF");
+
+            // Validar tamaño (máximo 5MB)
+            if (imagen.Length > 5 * 1024 * 1024)
+                return BadRequest("El archivo es demasiado grande. Máximo 5MB");
+
+            try
+            {
+                // Crear directorio si no existe
+                var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "productos");
+                if (!Directory.Exists(uploadsPath))
+                    Directory.CreateDirectory(uploadsPath);
+
+                // Generar nombre único para el archivo
+                var extension = Path.GetExtension(imagen.FileName);
+                var nombreArchivo = $"{Guid.NewGuid()}{extension}";
+                var rutaCompleta = Path.Combine(uploadsPath, nombreArchivo);
+
+                // Guardar archivo
+                using (var stream = new FileStream(rutaCompleta, FileMode.Create))
+                {
+                    await imagen.CopyToAsync(stream);
+                }
+
+                // Devolver URL relativa
+                var imagenUrl = $"/uploads/productos/{nombreArchivo}";
+                return Ok(new { imagenUrl });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al subir imagen: {ex.Message}");
+                return StatusCode(500, "Error interno del servidor al subir la imagen");
+            }
         }
 
         private bool ProductoExists(int id)

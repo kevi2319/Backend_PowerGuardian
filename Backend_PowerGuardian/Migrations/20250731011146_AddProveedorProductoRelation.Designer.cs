@@ -4,6 +4,7 @@ using Backend_PowerGuardian.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend_PowerGuardian.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250731011146_AddProveedorProductoRelation")]
+    partial class AddProveedorProductoRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -373,8 +376,7 @@ namespace Backend_PowerGuardian.Migrations
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Precio")
                         .HasColumnType("decimal(18,2)");
@@ -445,39 +447,6 @@ namespace Backend_PowerGuardian.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Proveedores");
-                });
-
-            modelBuilder.Entity("Backend_PowerGuardian.Models.ProveedorProducto", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal?>("PrecioProveedor")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("ProductoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProveedorId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductoId");
-
-                    b.HasIndex("ProveedorId", "ProductoId")
-                        .IsUnique();
-
-                    b.ToTable("ProveedorProductos");
                 });
 
             modelBuilder.Entity("Backend_PowerGuardian.Models.RecetaProducto", b =>
@@ -759,25 +728,6 @@ namespace Backend_PowerGuardian.Migrations
                     b.Navigation("Producto");
                 });
 
-            modelBuilder.Entity("Backend_PowerGuardian.Models.ProveedorProducto", b =>
-                {
-                    b.HasOne("Backend_PowerGuardian.Models.Producto", "Producto")
-                        .WithMany("ProveedorProductos")
-                        .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Backend_PowerGuardian.Models.Proveedor", "Proveedor")
-                        .WithMany("ProveedorProductos")
-                        .HasForeignKey("ProveedorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Producto");
-
-                    b.Navigation("Proveedor");
-                });
-
             modelBuilder.Entity("Backend_PowerGuardian.Models.RecetaProducto", b =>
                 {
                     b.HasOne("Backend_PowerGuardian.Models.MateriaPrima", "MateriaPrima")
@@ -879,8 +829,6 @@ namespace Backend_PowerGuardian.Migrations
 
             modelBuilder.Entity("Backend_PowerGuardian.Models.Producto", b =>
                 {
-                    b.Navigation("ProveedorProductos");
-
                     b.Navigation("RecetaProductos");
 
                     b.Navigation("Unidades");
@@ -894,8 +842,6 @@ namespace Backend_PowerGuardian.Migrations
             modelBuilder.Entity("Backend_PowerGuardian.Models.Proveedor", b =>
                 {
                     b.Navigation("Compras");
-
-                    b.Navigation("ProveedorProductos");
                 });
 #pragma warning restore 612, 618
         }
