@@ -46,4 +46,31 @@ public class ResenaController : ControllerBase
 
         return Ok(new { message = "Reseña guardada correctamente" });
     }
+
+    [HttpGet("producto-resena/{productoId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ObtenerResenasPorProducto(int productoId)
+    {
+        // 1) ¿Existe el producto?
+        var productoExiste = await _context.Productos.AnyAsync(p => p.Id == productoId);
+        if (!productoExiste)
+            return NotFound("Producto no encontrado.");
+
+        // 2) Trae reseñas
+        var resenas = await _context.Resenas
+            .Where(r => r.ProductoUnidad.ProductoId == productoId)
+            .Include(r => r.Usuario)
+            .Select(r => new
+            {
+                // usa minúsculas para que en el JSON salgan como espera Angular
+                calificacion = r.Calificacion,
+                comentario = r.Comentario,
+                fecha = r.Fecha,
+                cliente = r.Usuario.Nombres
+            })
+            .ToListAsync();
+
+        // 3) Responder siempre 200 con arreglo (vacío o con datos)
+        return Ok(resenas);
+    }
 }

@@ -449,24 +449,35 @@ public class AdminController : ControllerBase
         return Ok(proveedores);
     }
 
-    [HttpPost("proveedores")]
-    public async Task<IActionResult> CrearProveedor([FromBody] ProveedorDto dto)
+    [HttpGet] // La ruta será "api/ResenaAdmin" o lo que sea la ruta base del controlador
+    [AllowAnonymous] // Este atributo permite que cualquiera acceda, sin necesidad de estar autenticado.
+    public async Task<IActionResult> ObtenerTodasLasResenas()
     {
-        var proveedor = new Proveedor
-        {
-            Nombre = dto.Nombre,
-            Correo = dto.Correo,
-            Telefono = dto.Telefono,
-            Direccion = dto.Direccion,
-            Pais = dto.Pais,
-            Activo = dto.Activo
-        };
+        var resenas = await _context.Resenas
+            .Include(r => r.ProductoUnidad)
+            .ThenInclude(pu => pu.Producto)
+            .Include(r => r.Usuario)
+            .Select(r => new ResenaAdminDto
+            {
+                Id = r.Id,
+                ProductoNombre = r.ProductoUnidad.Producto.Nombre,
+                SKU = r.ProductoUnidad.SKU,
+                Cliente = r.Usuario.Nombres + " " + r.Usuario.ApellidoPaterno,
+                Calificacion = r.Calificacion,
+                Comentario = r.Comentario,
+                Fecha = r.Fecha
+            })
+            .ToListAsync();
 
-        _context.Proveedores.Add(proveedor);
-        await _context.SaveChangesAsync();
-        return Ok();
+        if (!resenas.Any())
+        {
+            return NotFound("No se encontraron reseñas.");
+        }
+
+        return Ok(resenas);
     }
 
+    
     [HttpPut("proveedores/{id}")]
     public async Task<IActionResult> EditarProveedor(int id, [FromBody] ProveedorDto dto)
     {
