@@ -46,4 +46,26 @@ public class ResenaController : ControllerBase
 
         return Ok(new { message = "Reseña guardada correctamente" });
     }
+
+    [HttpGet("resenas")]
+    public async Task<IActionResult> ObtenerResenas()
+    {
+        var resenas = await _context.Resenas
+            .Include(r => r.ProductoUnidad)
+                .ThenInclude(pu => pu.Producto)
+            .Include(r => r.Usuario)
+            .Select(r => new ResenaAdminDto
+            {
+                Id = r.Id,
+                ProductoNombre = r.ProductoUnidad.Producto.Nombre,
+                SKU = r.ProductoUnidad.SKU,
+                Cliente = r.Usuario.Nombres + " " + r.Usuario.ApellidoPaterno,
+                Calificacion = r.Calificacion,
+                Comentario = r.Comentario,
+                Fecha = r.Fecha
+            })
+            .ToListAsync();
+
+        return Ok(resenas);
+    }
 }
