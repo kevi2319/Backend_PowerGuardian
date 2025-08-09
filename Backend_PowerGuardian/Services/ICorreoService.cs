@@ -4,5 +4,6 @@ namespace Backend_PowerGuardian.Services
     {
         Task EnviarCorreoRegistroConSku(string email, string sku);
         Task EnviarCorreoAsociarDispositivo(string email, string sku);
+        Task EnviarCorreo(string destinatario, string asunto, string cuerpoHtml);
     }
 }

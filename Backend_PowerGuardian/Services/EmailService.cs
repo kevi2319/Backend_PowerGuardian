@@ -107,7 +107,7 @@ namespace Backend_PowerGuardian.Services
                         
                         <div style='background: #f8fffe; border: 1px solid #c7feb6; border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center;'>
                             <h3 style='color: #67b061; margin: 0 0 16px 0; font-size: 18px;'>🔐 Paso 1: Inicia sesión</h3>
-                            <a href='http://localhost:4200/login style='display: inline-block; background: #3d7bb6; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 8px 0; transition: background-color 0.3s;'>
+                            <a href='http://localhost:4200/login' style='display: inline-block; background: #3d7bb6; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 8px 0; transition: background-color 0.3s;'>
                                 Acceder a mi cuenta
                             </a>
                         </div>

@@ -24,6 +24,9 @@ namespace Backend_PowerGuardian.Data
         public DbSet<MateriaPrima> MateriasPrimas { get; set; }
         public DbSet<RecetaProducto> RecetasProducto { get; set; }
         public DbSet<ProveedorProducto> ProveedorProductos { get; set; }
+        public DbSet<Cotizacion> Cotizaciones { get; set; }
+        public DbSet<CotizacionDetalle> CotizacionDetalles { get; set; }
+
 
 
 
