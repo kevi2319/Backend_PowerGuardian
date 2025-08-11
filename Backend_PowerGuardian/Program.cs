@@ -1,6 +1,7 @@
 using Backend_PowerGuardian.Data;
 using Backend_PowerGuardian.Models;
 using Backend_PowerGuardian.Seed;
+using Backend_PowerGuardian.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,12 @@ using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddScoped<IDispositivoService, DispositivoService>();
+builder.Services.AddScoped<ICorreoService, EmailService>();
+builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<ICosteoService, CosteoService>();
+builder.Services.AddSingleton<MqttService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("cadenaSQL")));
@@ -27,22 +34,26 @@ builder.Services.ConfigureApplicationCookie(o =>
     o.Events.OnRedirectToAccessDenied = c => { c.Response.StatusCode = 403; return Task.CompletedTask; };
 });
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(o =>
-    {
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(o =>
+{
         o.RequireHttpsMetadata = false;
         o.SaveToken = true;
-        o.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
-            ClockSkew = TimeSpan.Zero,
+    o.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        ClockSkew = TimeSpan.Zero,
             RoleClaimType = ClaimTypes.Role,
         };
         // Eventos para depuraci�n de la autenticaci�n JWT
@@ -70,15 +81,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 }
                 return Task.CompletedTask;
             }
-        };
-        
-        o.MapInboundClaims = false;
-    });
+    };
+
+    o.MapInboundClaims = false;
+});
+
 
 builder.Services.AddCors(o =>
 {
     o.AddPolicy("AllowLocalhost",
-        p => p.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod());
+        p => p.WithOrigins("http://localhost:4200", "http://localhost:4201")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
 });
 
 builder.Services.AddAuthorization(o =>
@@ -135,6 +149,9 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+var mqttService = app.Services.GetRequiredService<MqttService>();
+await mqttService.InitAsync();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -146,6 +163,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Urls.Add("http://0.0.0.0:7009"); // Escucha en todas las IPs en el puerto 7009
+app.UseStaticFiles(); 
 
 using (var scope = app.Services.CreateScope())
 {
@@ -154,5 +172,6 @@ using (var scope = app.Services.CreateScope())
     await IdentitySeeder.SeedAsync(scope.ServiceProvider);
     ProductoSeeder.Seed(scope.ServiceProvider);
 }
+
 
 app.Run();
